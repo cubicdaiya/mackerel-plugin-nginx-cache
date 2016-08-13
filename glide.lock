@@ -1,0 +1,6 @@
+hash: 32bbc0a6ee74043e2c7b243c164da25f1aad4fc00514b89cf3205899adecca10
+updated: 2016-08-13T20:39:25.672200089+09:00
+imports:
+- name: github.com/mackerelio/go-mackerel-plugin-helper
+  version: 28e053df6c0b0b2450db639f5f95ae3b599bed79
+testImports: []

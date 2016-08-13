@@ -1,0 +1,4 @@
+package: github.com/cubicdaiya/mackerel-plugin-nginx-cache
+import:
+- package: github.com/mackerelio/go-mackerel-plugin-helper
+  version: 28e053df6c0b0b2450db639f5f95ae3b599bed79
