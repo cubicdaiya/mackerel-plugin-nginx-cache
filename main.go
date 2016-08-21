@@ -20,20 +20,20 @@ type NginxCachePlugin struct {
 }
 
 var graphdef map[string](mp.Graphs) = map[string](mp.Graphs){
-	"nginx-cache.usage": mp.Graphs{
-		Label: "nginx cache usage byte",
+	"nginx-cache.disk": mp.Graphs{
+		Label: "nginx cache usage megabyte",
 		Unit:  "integer",
 		Metrics: [](mp.Metrics){
 			mp.Metrics{Name: "usage", Label: "Usage", Diff: false, Type: "uint64"},
 			mp.Metrics{Name: "size", Label: "Size", Diff: false, Type: "uint64"},
 		},
 	},
-	"nginx-cache.keys_zone_usage": mp.Graphs{
-		Label: "nginx cache usage byte",
+	"nginx-cache.keys": mp.Graphs{
+		Label: "nginx cache keys zone usage megabyte",
 		Unit:  "integer",
 		Metrics: [](mp.Metrics){
-			mp.Metrics{Name: "keys_zone_usage", Label: "Keys Zone Usage", Diff: false, Type: "uint64"},
-			mp.Metrics{Name: "keys_zone_size", Label: "Keys Zone Size", Diff: false, Type: "uint64"},
+			mp.Metrics{Name: "zone_usage", Label: "Keys Zone Usage", Diff: false, Type: "uint64"},
+			mp.Metrics{Name: "zone_size", Label: "Keys Zone Size", Diff: false, Type: "uint64"},
 		},
 	},
 }
@@ -84,11 +84,11 @@ func (n NginxCachePlugin) FetchMetrics() (map[string]interface{}, error) {
 	stat := make(map[string]interface{})
 	stat["size"] = n.ProxyCacheSize
 	stat["usage"] = usage
-	stat["keys_zone_size"] = n.ProxyCacheKeysZoneSize
+	stat["zone_size"] = n.ProxyCacheKeysZoneSize
 
 	// nginx can store about 8,000 keys per 1MB
 	// refs: http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache_path
-	stat["keys_zone_usage"] = keysZoneUsage / 8000
+	stat["zone_usage"] = keysZoneUsage / 8000
 
 	return stat, nil
 }
