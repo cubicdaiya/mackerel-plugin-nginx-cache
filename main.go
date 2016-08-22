@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"path/filepath"
 
 	mp "github.com/mackerelio/go-mackerel-plugin-helper"
 )
@@ -52,16 +53,13 @@ func (n NginxCachePlugin) FetchMetrics() (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	cmd = exec.Command("sh", "-c", fmt.Sprintf("find %s -type f | wc -l", n.ProxyCachePath))
-	out, err = cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	keysZoneUsage, err := strconv.ParseUint(strings.TrimRight(string(out), "\n"), 0, 64)
-	if err != nil {
-		return nil, err
-	}
+	fileCount := 0
+	filepath.Walk(n.ProxyCachePath, func(path string, info os.FileInfo, err error) error {
+		if info.Mode().IsRegular() {
+			fileCount++
+		}
+		return nil
+	})
 
 	stat := make(map[string]interface{})
 	stat["size"] = n.ProxyCacheSize
@@ -70,7 +68,7 @@ func (n NginxCachePlugin) FetchMetrics() (map[string]interface{}, error) {
 
 	// nginx can store about 8,000 keys per 1MB
 	// refs: http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache_path
-	stat["zone_usage"] = keysZoneUsage / 8000
+	stat["zone_usage"] = uint64(fileCount / 8000)
 
 	return stat, nil
 }
