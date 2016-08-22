@@ -15,27 +15,9 @@ import (
 type NginxCachePlugin struct {
 	ProxyCachePath         string
 	ProxyCacheSize         uint64
+	ProxyCacheKeysZoneName string
 	ProxyCacheKeysZoneSize uint64
 	Tempfile               string
-}
-
-var graphdef map[string](mp.Graphs) = map[string](mp.Graphs){
-	"nginx-cache.disk": mp.Graphs{
-		Label: "nginx cache usage megabyte",
-		Unit:  "integer",
-		Metrics: [](mp.Metrics){
-			mp.Metrics{Name: "usage", Label: "Usage", Diff: false, Type: "uint64"},
-			mp.Metrics{Name: "size", Label: "Size", Diff: false, Type: "uint64"},
-		},
-	},
-	"nginx-cache.keys": mp.Graphs{
-		Label: "nginx cache keys zone usage megabyte",
-		Unit:  "integer",
-		Metrics: [](mp.Metrics){
-			mp.Metrics{Name: "zone_usage", Label: "Keys Zone Usage", Diff: false, Type: "uint64"},
-			mp.Metrics{Name: "zone_size", Label: "Keys Zone Size", Diff: false, Type: "uint64"},
-		},
-	},
 }
 
 var (
@@ -94,13 +76,36 @@ func (n NginxCachePlugin) FetchMetrics() (map[string]interface{}, error) {
 }
 
 func (n NginxCachePlugin) GraphDefinition() map[string](mp.Graphs) {
+	dk := fmt.Sprintf("nginx-cache.disk-%s", n.ProxyCacheKeysZoneName)
+	kk := fmt.Sprintf("nginx-cache.keys-%s", n.ProxyCacheKeysZoneName)
+
+	var graphdef map[string](mp.Graphs) = map[string](mp.Graphs){
+		dk: mp.Graphs{
+			Label: fmt.Sprintf("nginx cache usage megabyte: %s", n.ProxyCachePath),
+			Unit:  "integer",
+			Metrics: [](mp.Metrics){
+				mp.Metrics{Name: "usage", Label: "Usage", Diff: false, Type: "uint64"},
+				mp.Metrics{Name: "size", Label: "Size", Diff: false, Type: "uint64"},
+			},
+		},
+		kk: mp.Graphs{
+			Label: fmt.Sprintf("nginx cache keys zone usage megabyte: %s", n.ProxyCachePath),
+			Unit:  "integer",
+			Metrics: [](mp.Metrics){
+				mp.Metrics{Name: "zone_usage", Label: "Keys Zone Usage", Diff: false, Type: "uint64"},
+				mp.Metrics{Name: "zone_size", Label: "Keys Zone Size", Diff: false, Type: "uint64"},
+			},
+		},
+	}
+
 	return graphdef
 }
 
 func main() {
 	proxyCachePath := flag.String("path", "", "proxy_cache_path $path")
 	proxyCacheSize := flag.String("size", "", "proxy_cache_path $max_size")
-	proxyCacheKeysZoneSize := flag.String("ksize", "", "proxy_cache_path $keys_zone")
+	proxyCacheKeysZoneName := flag.String("kname", "", "proxy_cache_path $keys_zone_name")
+	proxyCacheKeysZoneSize := flag.String("ksize", "", "proxy_cache_path $keys_zone_size")
 	tempfile := flag.String("tempfile", "", "temporary file path")
 	flag.Parse()
 
@@ -110,6 +115,7 @@ func main() {
 	)
 
 	nginx.ProxyCachePath = *proxyCachePath
+	nginx.ProxyCacheKeysZoneName = *proxyCacheKeysZoneName
 
 	if usageUnitPat.MatchString(*proxyCacheSize) {
 		proxyCacheSizeStr := *proxyCacheSize
